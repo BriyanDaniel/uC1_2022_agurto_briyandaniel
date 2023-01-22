@@ -1,0 +1,96 @@
+Disassembly Listing for ports
+Generated From:
+C:/Users/usuario/OneDrive/Escritorio/MPLAB/ports.X/dist/default/production/ports.X.production.elf
+07/01/2023 11:04:43 PM
+
+---  C:/Users/usuario/OneDrive/Escritorio/MPLAB/ports.X/blink.s  ----------------------------------------
+                                                  1:     PROCESSOR 18F57Q84
+                                                  2:     #include "Bit_Config.inc"    /*config statements should precede project file includes.*/
+                                                  3:     #include <xc.inc>
+                                                  4:     #include"Retardos.inc"
+                                                  5:         
+                                                  6:     PSECT resetVect,class=CODE,reloc=2
+                                                  7:     resetVect:
+1FFE4  EF00     GOTO 0x0                          8:         goto Main
+                                                  9:         
+                                                  10:    PSECT CODE  
+                                                  11:     Main:
+0000  ED18     CALL 0x30, 1                       12:        CALL Config_OSC,1
+0004  ED1E     CALL 0x3C, 1                       13:        CALL Config_Port,1
+                                                  14:        
+                                                  15:    
+                                                  16:    Led_on:
+0008  97C3     BCF 0xC3, 3, BANKED                17:        BCF	    LATF,3,1	;Led on    
+000A  ECF4     CALL 0x1FFE8, 0                    18:        CALL Delay_250ms
+000E  ECF4     CALL 0x1FFE8, 0                    19:        CALL Delay_250ms
+0012  ECF4     CALL 0x1FFE8, 0                    20:        CALL Delay_250ms
+0016  ECF4     CALL 0x1FFE8, 0                    21:        CALL Delay_250ms
+                                                  22:    Led_off:	
+001A  87C3     BSF 0xC3, 3, BANKED                23:        BSF	    LATF,3,1	;Led off
+001C  ECF4     CALL 0x1FFE8, 0                    24:        CALL Delay_250ms
+0020  ECF4     CALL 0x1FFE8, 0                    25:        CALL Delay_250ms
+0024  ECF4     CALL 0x1FFE8, 0                    26:        CALL Delay_250ms
+0028  ECF4     CALL 0x1FFE8, 0                    27:        CALL Delay_250ms
+002C  EF04     GOTO 0x8                           28:        goto    Led_on   
+                                                  29:       
+                                                  30:    Config_OSC:
+                                                  31:        ;Configuracion del oscilador interno a una frecuencia  de 4MHz
+0030  0100     MOVLB 0x0                          32:        BANKSEL OSCCON1
+0032  0E60     MOVLW 0x60                         33:        MOVLW   0x60    ; seleccionamos el bloque del osc interno con  un div:1
+0034  6FAD     MOVWF OSCCON1, BANKED              34:        MOVWF   OSCCON1,1
+0036  0E02     MOVLW 0x2                          35:        MOVLW   0x02    ; seleccionamos una frecuencia de 4MHz
+0038  6FB1     MOVWF OSCFRQ, BANKED               36:        MOVWF   OSCFRQ,1
+003A  0012     RETURN 0                           37:        RETURN
+                                                  38:    
+                                                  39:    Config_Port:	;PORT-LAT-ANSEL-TRIS LED:RF3, BUTTON:RA3
+                                                  40:        ;Config Led
+003C  0104     MOVLB 0x4                          41:        BANKSEL PORTF
+003E  6BD3     CLRF 0xD3, BANKED                  42:        CLRF    PORTF,1	;PORTF =0
+0040  87C3     BSF 0xC3, 3, BANKED                43:        BSF	    LATF,3,1	;LATF<3> =1 -Led off
+0042  6B28     CLRF 0x28, BANKED                  44:        CLRF    ANSELF,1	;ANSELF<7:0> = 0 -PortF digital 
+0044  97CB     BCF 0xCB, 3, BANKED                45:        BCF	    TRISF,3,1	;TRISF<3> = 0 -RF3 como salida
+                                                  46:        
+                                                  47:        ;Config Button
+0046  0104     MOVLB 0x4                          48:         BANKSEL PORTA
+0048  6BCE     CLRF 0xCE, BANKED                  49:         CLRF    PORTA,1	;PORTA <7:0> = 0
+004A  6B00     CLRF 0x0, BANKED                   50:         CLRF    ANSELA,1	;portA digital 
+004C  87C6     BSF 0xC6, 3, BANKED                51:         BSF     TRISA,3,1	;RA3 como entrada
+004E  8701     BSF 0x1, 3, BANKED                 52:         BSF     WPUA,3,1	;Activamos la resistencia pull-up del pin RA3    
+0050  0012     RETURN 0                           53:         RETURN 
+                                                  54:     
+                                                  55:    
+                                                  56:    END resetVect   
+                                                  57:    
+                                                  58:    
+---  C:/Users/usuario/OneDrive/Escritorio/MPLAB/ports.X/Retardos.inc  -----------------------------------
+1:             PSECT udata_acs
+2:             contador1:  DS 1	    ;reserva 1 byte en acces ram
+3:             contador2:  DS 1 
+4:                 
+5:             PSECT code
+6:             Delay_250ms:
+7:                 MOVLW   249		    ; 2Tcy -- Call
+1FFE8  0EF9     MOVLW 0xF9
+8:                 MOVWF   contador2,0	    ; 1Tcy
+1FFEA  6E01     MOVWF __S3, ACCESS
+9:             ;   T = (6 + 4k)us	    1Tcy = 1us
+10:            Ext_Loop:		   
+11:                MOVLW   	249	    ; 1Tcy
+1FFEC  0EF9     MOVLW 0xF9
+12:                MOVWF   contador1,0	    ; 1Tcy
+1FFEE  6E00     MOVWF __S3, ACCESS
+13:            Int_Loop:
+14:                Nop			    ; k*Tcy
+1FFF0  0000     NOP
+15:                DECFSZ  contador1,1,0   ; (k-1)+ 3Tcy
+1FFF2  2E00     DECFSZ __S3, F, ACCESS
+16:                GOTO    Int_Loop	    ; (k-1)+2Tcy
+1FFF4  EFF8     GOTO 0x1FFF0
+17:                DECFSZ  contador2,1,0
+1FFF8  2E01     DECFSZ __S3, F, ACCESS
+18:                GOTO    Ext_Loop	  
+1FFFA  EFF6     GOTO 0x1FFEC
+19:                RETURN		    ; 2Tcy
+1FFFE  0012     RETURN 0
+20:            
+21:            
